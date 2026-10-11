@@ -61,12 +61,12 @@ retry mutations silently.
 
 ### Verification matrix
 
-| Surface | Required evidence |
-| --- | --- |
-| API client, generated types | `pnpm api:check`; Vitest tests against recorded responses |
-| screens and view models | Vitest tests for the model logic; typecheck and lint clean |
-| build and release bundle | `pnpm build`; `scripts/package.sh` rejects external hosts |
-| dependency bumps | `pnpm-lock.yaml` diff reviewed; release notes read |
+| Surface                     | Required evidence                                          |
+| --------------------------- | ---------------------------------------------------------- |
+| API client, generated types | `pnpm api:check`; Vitest tests against recorded responses  |
+| screens and view models     | Vitest tests for the model logic; typecheck and lint clean |
+| build and release bundle    | `pnpm build`; `scripts/package.sh` rejects external hosts  |
+| dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes read         |
 
 ### Release audit
 
