@@ -1,0 +1,15 @@
+{
+  "$id": "mizuchi-http-v1-draft",
+  "$comment": "Placeholder until mizuchi publishes its HTTP contract (Sannrox/mizuchi#75). Replace with `pnpm api:sync <mizuchi-commit>`.",
+  "$defs": {
+    "Health": {
+      "additionalProperties": false,
+      "properties": {
+        "contracts": { "items": { "type": "string" }, "type": "array" },
+        "version": { "type": "string" }
+      },
+      "required": ["contracts", "version"],
+      "type": "object"
+    }
+  }
+}
