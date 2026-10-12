@@ -15,7 +15,7 @@ export const locate = (moduleUrl: string, dev: boolean) =>
 
 export const { consoleRoot, apiRoot } = locate(import.meta.url, import.meta.env.DEV);
 
-/** A non-2xx response from the mizuchi API. */
+/** A non-2xx response; `message` is the server's `error` text when present. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -25,13 +25,32 @@ export class ApiError extends Error {
   }
 }
 
-/** Typed JSON GET against the mizuchi API. */
-export const request = async <T>(path: string, fetcher: typeof fetch = fetch): Promise<T> => {
+type ApiRequest = {
+  token?: string;
+  method?: "GET" | "POST";
+};
+
+/** Typed JSON request against the mizuchi API. */
+export const request = async <T>(
+  path: string,
+  init: ApiRequest = {},
+  fetcher: typeof fetch = fetch,
+): Promise<T> => {
+  const headers = new Headers({ accept: "application/json" });
+  if (init.token) {
+    headers.set("authorization", `Bearer ${init.token}`);
+  }
   const response = await fetcher(new URL(path, apiRoot), {
-    headers: { accept: "application/json" },
+    method: init.method ?? "GET",
+    headers,
   });
   if (!response.ok) {
-    throw new ApiError(response.status, `${path}: HTTP ${response.status}`);
+    const body: unknown = await response.json().catch(() => undefined);
+    const message =
+      typeof body === "object" && body !== null && "error" in body && typeof body.error === "string"
+        ? body.error
+        : `HTTP ${response.status}`;
+    throw new ApiError(response.status, message);
   }
   return (await response.json()) as T;
 };
@@ -40,8 +59,8 @@ export type ServerCheck = { kind: "ready"; version: string } | { kind: "too-old"
 
 /** Require the server to list the contract this console was built for. */
 export const checkServer = async (fetcher: typeof fetch = fetch): Promise<ServerCheck> => {
-  const health = await request<Health>("healthz", fetcher);
-  return health.contracts.includes(MIZUCHI_CONTRACT)
+  const health = await request<Health>("healthz", {}, fetcher);
+  return health.ok && health.contract === MIZUCHI_CONTRACT
     ? { kind: "ready", version: health.version }
     : { kind: "too-old", version: health.version };
 };

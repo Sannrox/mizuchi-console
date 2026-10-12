@@ -6,8 +6,9 @@ running queries with cancel. It is a client of mizuchi's versioned HTTP API only
 (see [ADR 0002](docs/decisions/0002-separate-console-api-only.md)); mizuchi itself
 ships no UI code.
 
-Status: skeleton. The screens are tracked as issues; the API they need is tracked in
-[Sannrox/mizuchi#75](https://github.com/Sannrox/mizuchi/issues/75).
+The console vendors mizuchi's `mizuchi.query-api/v1` contract and lists completed
+queries from it. Remaining screens (plan overlay, operator metrics, live cancel)
+are tracked as issues.
 
 ## How it ships
 
@@ -18,9 +19,8 @@ origins, so the same zip works at `/ui/` and behind a proxy prefix.
 
 ## API types
 
-`api/mizuchi-http-v1.schema.json` is mizuchi's HTTP contract, vendored at the commit in
-`api/MIZUCHI_REF`. Until mizuchi publishes one, it holds a draft with only `/healthz`.
-`src/api/mizuchi.gen.ts` is generated from it.
+`api/mizuchi-http-v1.schema.json` is mizuchi's published query-api schema, vendored at
+the commit in `api/MIZUCHI_REF`. `src/api/mizuchi.gen.ts` is generated from it.
 
 ```sh
 pnpm api:sync <mizuchi-commit-sha>   # update the vendored schema and regenerate
