@@ -34,8 +34,45 @@ VERSION=v0.0.0-dev pnpm package
 
 Shared workflow skills come from [Sannrox/agent-kit](https://github.com/Sannrox/agent-kit),
 tracking `main` with no lock. `.agents/skills/*/SKILL.md` are stubs that point there;
-repo-specific facts live in `.agents/project.md`. Check the stubs with
+repo-specific facts the skills need live in `## Agent skill profile` below. Check the stubs with
 `bash scripts/validate-workflow-skills.sh`.
+
+## Agent skill profile
+
+Facts the shared agent-kit skills read that the sections above do not already
+state.
+
+Feature: a new screen or user-visible console behavior.
+
+### Compatibility and failure obligations
+
+The console shows "server too old" instead of failing when the server lacks
+its contract; failed or cancelled API calls leave the UI usable and never
+retry mutations silently.
+
+### Additional impact boundaries
+
+- the mizuchi HTTP contract version the console requires (`/healthz` contracts);
+- a relative-URL bundle that works under any proxy prefix and loads nothing
+  from other origins;
+- tokens are kept in memory only;
+- the release zip, `SHA256SUMS` and attestation consumed by servers that
+  embed the console.
+
+### Verification matrix
+
+| Surface                     | Required evidence                                          |
+| --------------------------- | ---------------------------------------------------------- |
+| API client, generated types | `pnpm api:check`; Vitest tests against recorded responses  |
+| screens and view models     | Vitest tests for the model logic; typecheck and lint clean |
+| build and release bundle    | `pnpm build`; `scripts/package.sh` rejects external hosts  |
+| dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes read         |
+
+### Release audit
+
+- `package.json` version and lockfile consistency;
+- vendored API contract ref (`api/MIZUCHI_REF`) and the minimum mizuchi version it needs;
+- release zip, `SHA256SUMS` and attestation.
 
 ## Parallel delivery lanes
 
