@@ -6,9 +6,9 @@ running queries with cancel. It is a client of mizuchi's versioned HTTP API only
 (see [ADR 0002](docs/decisions/0002-separate-console-api-only.md)); mizuchi itself
 ships no UI code.
 
-The console vendors mizuchi's `mizuchi.query-api/v1` contract and lists completed
-queries from it. Remaining screens (plan overlay, operator metrics, live cancel)
-are tracked as issues.
+The console vendors mizuchi's `mizuchi.query-api/v1` contract. It lists history,
+plans with ANALYZE overlay, operator metrics, and a polled running list with
+cancel.
 
 ## How it ships
 

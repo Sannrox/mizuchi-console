@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
 
 export const Card = ({ className = "", ...props }: ComponentProps<"div">) => (
   <div className={`rounded-card border border-line bg-card ${className}`} {...props} />
@@ -18,6 +18,48 @@ export const Button = ({ variant = "plain", className = "", ...props }: ButtonPr
       className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 ${look} ${className}`}
       {...props}
     />
+  );
+};
+
+/** A mutation trigger that asks once: the first click arms it, the second sends. */
+export const ConfirmButton = ({
+  label,
+  confirm,
+  dismiss = "Back",
+  disabled,
+  onConfirm,
+}: {
+  label: string;
+  /** Names exactly what will be sent, so the confirmation is the preview. */
+  confirm: string;
+  dismiss?: string;
+  disabled: boolean;
+  onConfirm: () => void;
+}) => {
+  const [armed, setArmed] = useState(false);
+  if (!armed) {
+    return (
+      <Button disabled={disabled} onClick={() => setArmed(true)}>
+        {label}
+      </Button>
+    );
+  }
+  return (
+    <>
+      <Button
+        variant="primary"
+        disabled={disabled}
+        onClick={() => {
+          setArmed(false);
+          onConfirm();
+        }}
+      >
+        {confirm}
+      </Button>
+      <Button variant="ghost" onClick={() => setArmed(false)}>
+        {dismiss}
+      </Button>
+    </>
   );
 };
 

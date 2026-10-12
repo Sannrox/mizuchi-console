@@ -4,6 +4,7 @@ import { checkServer, consoleRoot } from "./api/http";
 import { History } from "./screens/history";
 import { parseHistorySearch } from "./screens/history-model";
 import { QueryDetail } from "./screens/query-detail";
+import { Running } from "./screens/running";
 import { ServerStatus } from "./screens/server-status";
 import { TopBar } from "./screens/top-bar";
 import { Centered, Title } from "./ui/kit";
@@ -67,8 +68,14 @@ const queryRoute = createRoute({
   },
 });
 
+const runningRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/running",
+  component: Running,
+});
+
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([appRoute.addChildren([indexRoute, queryRoute])]),
+  routeTree: rootRoute.addChildren([appRoute.addChildren([indexRoute, queryRoute, runningRoute])]),
   basepath: consoleRoot.pathname,
 });
 
