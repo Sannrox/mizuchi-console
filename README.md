@@ -13,8 +13,8 @@ cancel.
 ## How it ships
 
 Each tag `vX.Y.Z` publishes `mizuchi-console-vX.Y.Z.zip`, `SHA256SUMS`, and a GitHub
-artifact attestation. A server embedding mizuchi can pin one release by URL and SHA-256
-and serve it at `/ui/`. The build uses only relative URLs and loads no assets from other
+artifact attestation. mizuchi serves an unpacked zip from `QueryApiConfig.ui_dir` at
+`/ui/` (ADR 0014). The build uses only relative URLs and loads no assets from other
 origins, so the same zip works at `/ui/` and behind a proxy prefix.
 
 ## API types
@@ -35,7 +35,7 @@ shows "too old" otherwise.
 ```sh
 pnpm install
 MIZUCHI_URL=http://127.0.0.1:8080 pnpm dev   # proxies /v1 and /healthz to a mizuchi server
-pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
+pnpm api:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
 VERSION=v0.0.0-dev pnpm package              # release/ zip + SHA256SUMS
 ```
 

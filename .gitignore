@@ -5,7 +5,6 @@ release/
 
 .agents/*
 !.agents/skills/
-!.agents/project.md
 
 # Delivery lane worktrees (deliver-ready-issue)
 /.worktrees/
