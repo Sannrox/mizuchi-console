@@ -48,7 +48,7 @@ export const parseHistorySearch = (search: Record<string, unknown>): HistorySear
 };
 
 /** `datetime-local` or ISO string → microseconds since epoch. */
-export const parseTimeInput = (value: string): number | undefined => {
+const parseTimeInput = (value: string): number | undefined => {
   if (!value) {
     return undefined;
   }

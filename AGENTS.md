@@ -28,6 +28,7 @@ pnpm install
 MIZUCHI_URL=http://127.0.0.1:8080 pnpm dev
 pnpm api:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
 VERSION=v0.0.0-dev pnpm package
+bash scripts/validate-workflow-skills.sh
 ```
 
 ## Agent skills
@@ -56,8 +57,8 @@ retry mutations silently.
 - a relative-URL bundle that works under any proxy prefix and loads nothing
   from other origins;
 - tokens are kept in memory only;
-- the release zip, `SHA256SUMS` and attestation consumed by servers that
-  embed the console.
+- the release zip, `SHA256SUMS` and attestation; mizuchi serves the unpacked
+  zip from `QueryApiConfig.ui_dir` at `/ui/`.
 
 ### Verification matrix
 
@@ -66,13 +67,15 @@ retry mutations silently.
 | API client, generated types | `pnpm api:check`; Vitest tests against recorded responses  |
 | screens and view models     | Vitest tests for the model logic; typecheck and lint clean |
 | build and release bundle    | `pnpm build`; `scripts/package.sh` rejects external hosts  |
-| dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes read         |
+| agent-kit stubs             | `bash scripts/validate-workflow-skills.sh`                 |
+| dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes in the PR    |
 
 ### Release audit
 
 - `package.json` version and lockfile consistency;
 - vendored API contract ref (`api/MIZUCHI_REF`) and the minimum mizuchi version it needs;
-- release zip, `SHA256SUMS` and attestation.
+- release zip, `SHA256SUMS` and attestation;
+- `CHANGELOG.md` is release-owned; pull requests do not edit it.
 
 ## Parallel delivery lanes
 
@@ -144,8 +147,8 @@ The three-lane limit counts claims visible on GitHub per repository: open
 implementation Pull Requests plus claim branches without one. Assigned or
 planned work with neither is not a running lane.
 
-Parallel lanes must not collide. Collision surfaces in this repository are the
-vendored API schema and generated types, the router, and
+Parallel lanes must not collide. Collision surfaces in this repository are
+`src/api/` (vendored schema, generated types, and HTTP client), the router, and
 `package.json`/`pnpm-lock.yaml`. Lanes that would
 both change one of these surfaces run in sequence, not in parallel.
 
@@ -176,3 +179,4 @@ agent-kit.
 
 Conventional commit subjects (`feat:`, `fix:`, `docs:`, `chore:`). One focused change per
 Pull Request; CI must be green. Do not commit `dist/`, `release/` or `node_modules/`.
+Do not edit `CHANGELOG.md`; release notes go in the pull request body.
