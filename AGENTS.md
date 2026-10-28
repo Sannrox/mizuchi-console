@@ -31,7 +31,7 @@ VERSION=v0.0.0-dev pnpm package
 bash scripts/validate-workflow-skills.sh
 ```
 
-## Agent skills
+## Shared agent skills
 
 Shared workflow skills come from [Sannrox/agent-kit](https://github.com/Sannrox/agent-kit),
 tracking `main` with no lock. `.agents/skills/*/SKILL.md` are stubs that point there;
@@ -135,9 +135,9 @@ Local isolation protects lanes that share a machine; it is not a claim.
 - A worktree serves exactly one Issue. Finished lanes are removed; a worktree is
   never reused for a different Issue or renamed to hide its origin.
 - Shared Git state is mutated in short, serialized slots: `git fetch --prune`,
-  worktree creation and removal, local branch deletion, and merging belong to
-  the lead of a parallel run or happen one lane at a time on a shared machine.
-  A lane commits and publishes its own branch from its own worktree; that is
+  worktree creation and removal, and local branch deletion belong to the lead
+  of a parallel run or happen one lane at a time on a shared machine. A lane
+  commits, publishes, and lands its own branch from its own worktree; that is
   not a shared mutation. Nobody holds a slot across implementation, test runs,
   or a remote wait.
 
@@ -163,10 +163,10 @@ ancestor of its head; it refreshes onto `main` only for a conflict, a failing
 gate, an explicit request, or a sibling landing on a shared surface, not
 merely because `main` advanced.
 
-Landing is sequential. After each merge, fetch, recompute the frontier, and let
-the remaining lanes recheck `mergeable` against the new `main`. A failed or
-timed-out merge response may still have merged; reconcile the remote state
-before retrying.
+Each lane lands its own reviewed head with `issue-lane.sh land`; lanes may
+watch concurrently, and a lane that conflicts with a sibling's landing stops
+instead of merging. After each merge, fetch, recompute the frontier, and let
+the remaining lanes recheck `mergeable` against the new `main`.
 
 The lead of a parallel run keeps a ledger per lane: Issue, branch, base SHA,
 owner, state, Pull Request, evidence, blockers, and cleanup. Keep hostnames
@@ -174,6 +174,22 @@ and absolute checkout paths in the session with the maintainer, never on
 GitHub. Report verified outcomes, not launched work. The executable lead
 procedure is `skills/deliver-ready-issue/references/parallel-delivery.md` in
 agent-kit.
+
+### Publishing and landing
+
+Lane branches are published with GitHub-verified commits and landed through
+the shared lane tool, never with a plain `git push` or a hand-run merge.
+Commit locally as usual and never pass `--no-gpg-sign`.
+
+- Publish from the lane worktree with
+  `bash "${AGENT_KIT_HOME:-$HOME/.agents/agent-kit}"/skills/deliver-ready-issue/scripts/issue-lane.sh push <issue>`.
+  It creates the Verified commit and resets the worktree to it, so local
+  `HEAD` is the Pull Request head. Confirm it reports
+  `verification.verified=true`.
+- Land with
+  `bash "${AGENT_KIT_HOME:-$HOME/.agents/agent-kit}"/skills/deliver-ready-issue/scripts/issue-lane.sh land <issue> --pr <pr>`.
+  It squash-merges with the reviewed head as the precondition. Never queue
+  GitHub auto-merge, and avoid GitHub rebase merges, which drop signatures.
 
 ## Commits and Pull Requests
 
