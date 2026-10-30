@@ -6,5 +6,19 @@ pull request body, which becomes the squash commit; at release,
 
 ## Unreleased
 
-No release has been published yet. At the first release,
-`scripts/changelog-draft.sh` lists the changes merged so far.
+## v0.1.0 (2026-10-30)
+
+First release. The console is a relative-URL zip that a mizuchi query API
+serves at `/ui/` from `ui_dir`, pinned by SHA-256. Compatibility follows the
+query API `/healthz` contract id.
+
+### What's Changed
+
+- chore: publish and land through the shared agent-kit lane tool (#17) (#18)
+- chore: drop leftover scaffold deps and align agent docs (#16)
+- ci: cancel a pull request's superseded runs (#14)
+- docs: add a release-owned changelog (#12)
+- feat: show live running queries with cancel (#9)
+- feat: show per-operator time and memory metrics (#8)
+- feat: show query plans with EXPLAIN ANALYZE overlay (#7)
+- feat: list completed queries from the history API (#6)
