@@ -12,10 +12,13 @@ cancel.
 
 ## How it ships
 
-Each tag `vX.Y.Z` publishes `mizuchi-console-vX.Y.Z.zip`, `SHA256SUMS`, and a GitHub
-artifact attestation. mizuchi serves an unpacked zip from `QueryApiConfig.ui_dir` at
-`/ui/` (ADR 0014). The build uses only relative URLs and loads no assets from other
-origins, so the same zip works at `/ui/` and behind a proxy prefix.
+Each signed annotated tag `vX.Y.Z` (equal to the `package.json` version) publishes
+`mizuchi-console-vX.Y.Z.zip`, `SHA256SUMS`, an SBOM, provenance attestations, a
+family release manifest, and a GitHub Release whose notes come from CHANGELOG.
+mizuchi serves an unpacked zip from `QueryApiConfig.ui_dir` at `/ui/` (ADR 0014).
+The build uses only relative URLs and loads no assets from other origins, so the
+same zip works at `/ui/` and behind a proxy prefix. This repository does not
+publish a container image. See [RELEASING.md](RELEASING.md).
 
 ## API types
 

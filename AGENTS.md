@@ -29,6 +29,7 @@ MIZUCHI_URL=http://127.0.0.1:8080 pnpm dev
 pnpm api:check && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
 VERSION=v0.0.0-dev pnpm package
 bash scripts/validate-workflow-skills.sh
+bash scripts/validate-release.sh
 ```
 
 ## Shared agent skills
@@ -68,13 +69,16 @@ retry mutations silently.
 | screens and view models     | Vitest tests for the model logic; typecheck and lint clean |
 | build and release bundle    | `pnpm build`; `scripts/package.sh` rejects external hosts  |
 | agent-kit stubs             | `bash scripts/validate-workflow-skills.sh`                 |
+| release path                | `bash scripts/validate-release.sh`                         |
 | dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes in the PR    |
 
 ### Release audit
 
 - `package.json` version and lockfile consistency;
 - vendored API contract ref (`api/MIZUCHI_REF`) and the minimum mizuchi version it needs;
-- release zip, `SHA256SUMS` and attestation;
+- signed annotated `v*` tag equals `package.json` version;
+- release zip, `SHA256SUMS`, SBOM, provenance, and family manifest;
+- GitHub Release notes come from CHANGELOG; no `latest` image tag;
 - `CHANGELOG.md` is release-owned; pull requests do not edit it.
 
 ## Parallel delivery lanes
@@ -148,8 +152,10 @@ implementation Pull Requests plus claim branches without one. Assigned or
 planned work with neither is not a running lane.
 
 Parallel lanes must not collide. Collision surfaces in this repository are
-`src/api/` (vendored schema, generated types, and HTTP client), the router, and
-`package.json`/`pnpm-lock.yaml`. Lanes that would
+`src/api/` (vendored schema, generated types, and HTTP client), the router,
+`package.json`/`pnpm-lock.yaml`, `.github/workflows/`, `scripts/package.sh`,
+`scripts/release-package.sh`, `scripts/verify-release-tag.sh`,
+`scripts/validate-release.sh`, `security/`, and `RELEASING.md`. Lanes that would
 both change one of these surfaces run in sequence, not in parallel.
 
 A lane publishes its first Verified commit to the claim branch as a draft Pull
