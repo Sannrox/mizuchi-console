@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import uuid
 from pathlib import Path
 
 COMPONENT = "mizuchi-console"
@@ -80,7 +81,7 @@ def bom_from_packages(packages: list[tuple[str, str]], version: str) -> dict:
             }
         )
     root_purl = f"pkg:npm/{COMPONENT}@{version}"
-    return {
+    bom = {
         "bomFormat": "CycloneDX",
         "specVersion": "1.5",
         "version": 1,
@@ -95,6 +96,10 @@ def bom_from_packages(packages: list[tuple[str, str]], version: str) -> dict:
         },
         "components": components,
     }
+
+    document = json.dumps(bom, sort_keys=True, separators=(",", ":"))
+    bom["serialNumber"] = uuid.uuid5(uuid.NAMESPACE_URL, document).urn
+    return bom
 
 
 def self_test() -> None:
@@ -132,6 +137,11 @@ def self_test() -> None:
     assert bom["metadata"]["component"]["name"] == "mizuchi-console"
     assert bom["metadata"]["component"]["version"] == "0.1.0"
     assert bom["metadata"]["component"]["type"] == "application"
+    serial = bom["serialNumber"]
+    assert serial.startswith("urn:uuid:")
+    assert uuid.UUID(serial.removeprefix("urn:uuid:")).version == 5
+    assert bom_from_packages(packages, "0.1.0")["serialNumber"] == serial
+    assert bom_from_packages(packages + [("another-package", "1.0.0")], "0.1.0")["serialNumber"] != serial
     names = {item["name"] for item in bom["components"]}
     assert names == {"@tanstack/react-query", "react", "zustand"}, names
     scoped = next(item for item in bom["components"] if item["name"] == "@tanstack/react-query")
