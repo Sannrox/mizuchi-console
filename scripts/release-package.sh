@@ -84,18 +84,28 @@ for path in sorted(p for p in out.iterdir() if p.is_file() and p.name != "SHA256
 
 LABEL_ARGS=()
 if [[ -n "$TAG" && "$SKIP_GITHUB" -eq 0 ]] && command -v gh >/dev/null 2>&1; then
-  prev="$(git tag --list 'v*' --sort=-version:refname)"
-  prev="$(awk -v cur="$TAG" '$0 != cur { print; exit }' <<<"$prev")"
-  search=()
+  # Gate flags come from the pull requests merged since the nearest earlier
+  # final tag in the release commit's history (an rc does not reset the
+  # range), and only those whose merge commit is in prev..GIT_SHA. The search
+  # is also bounded by the release commit's date, so a retry days later
+  # neither counts work merged after the tagged commit nor lets it crowd
+  # in-range pull requests out of the result limit.
+  utc_day() { TZ=UTC git log -1 --date=format-local:%Y-%m-%d --format=%cd "$1"; }
+  prev="$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-*' "${GIT_SHA}^" 2>/dev/null || true)"
+  range="$GIT_SHA"
+  until_day="$(utc_day "$GIT_SHA")"
+  merged="merged:<=${until_day}"
   if [[ -n "$prev" ]]; then
-    since="$(git log -1 --format=%cs "$prev" 2>/dev/null || true)"
-    if [[ -n "$since" ]]; then
-      search+=(--search "merged:>=${since}")
-    fi
+    range="${prev}..${GIT_SHA}"
+    merged="merged:$(utc_day "$prev")..${until_day}"
   fi
-  while IFS= read -r label; do
-    [[ -n "$label" ]] && LABEL_ARGS+=("--label" "$label")
-  done < <(gh pr list --state merged --limit 100 "${search[@]}" --json labels --jq '.[].labels[].name' 2>/dev/null || true)
+  in_range="$(mktemp)"
+  git rev-list "$range" >"$in_range"
+  while IFS=$'\t' read -r commit label; do
+    [[ -n "$label" ]] && grep -qxF "$commit" "$in_range" && LABEL_ARGS+=("--label" "$label")
+  done < <(gh pr list --state merged --limit 100 --search "$merged" --json mergeCommit,labels \
+    --jq '.[] | select(.mergeCommit != null) | .mergeCommit.oid as $c | .labels[] | "\($c)\t\(.name)"' 2>/dev/null || true)
+  rm -f "$in_range"
 fi
 
 manifest_args=(
