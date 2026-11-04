@@ -278,6 +278,16 @@ jobs:
         env:
           TAG: ${{ needs.verify-tag.outputs.tag }}
         run: python3 scripts/changelog-notes.py "${TAG#v}" > release/RELEASE_NOTES.md
+      - name: Require the tag at the release commit
+        env:
+          TAG: ${{ needs.verify-tag.outputs.tag }}
+          SHA: ${{ needs.verify-tag.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Only verify-tag checked the signature; never attach this release
+          # to a tag that no longer points at the verified commit.
+          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          test "$(git rev-parse "${TAG}^{commit}")" = "$SHA" || { echo "tag ${TAG} no longer points at ${SHA}" >&2; exit 1; }
       - name: Draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -318,8 +328,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.verify-tag.outputs.tag }}
           PRERELEASE: ${{ needs.verify-tag.outputs.prerelease }}
+          SHA: ${{ needs.verify-tag.outputs.sha }}
         run: |
           set -euo pipefail
+          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          test "$(git rev-parse "${TAG}^{commit}")" = "$SHA" || { echo "tag ${TAG} no longer points at ${SHA}" >&2; exit 1; }
           draft="$(gh release view "$TAG" --json isDraft --jq .isDraft)"
           if [[ "$draft" != true ]]; then
             echo "release ${TAG} is already published; cut a new tag instead of re-running" >&2

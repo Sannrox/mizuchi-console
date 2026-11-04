@@ -83,6 +83,8 @@ if grep -F '2>/dev/null || true)' "$workflow" >/dev/null || grep -F '2>/dev/null
 fi
 [[ "$(grep -cF 'elif [[ "$state" != *"release not found"* ]]; then' "$workflow")" -eq "$(grep -cF -- '- name: Refuse a published release' "$workflow")" ]] \
   || fail "${workflow} every published-release guard must accept only a draft or release not found"
+[[ "$(grep -cF 'test "$(git rev-parse "${TAG}^{commit}")" = "$SHA" ||' "$workflow")" -ge 2 ]] \
+  || fail "${workflow} must re-check that the tag still points at the release commit before drafting and before publishing"
 grep -F 'gh release delete-asset "$TAG" "$name" --yes' "$workflow" >/dev/null \
   || fail "${workflow} must drop an earlier run's assets when it resumes a draft"
 grep -F "needs: [verify-tag, package, attest]" "$workflow" >/dev/null \
@@ -92,6 +94,8 @@ grep -F "needs: [verify-tag, package, attest]" "$workflow" >/dev/null \
 # above by the release commit.
 grep -F -- "--exclude '*-*' \"\${GIT_SHA}^\"" scripts/release-package.sh >/dev/null \
   || fail "scripts/release-package.sh must start gate flags at the previous final tag before the release commit"
+grep -F 'merged="merged:$(utc_day "$prev")..${until_day}"' scripts/release-package.sh >/dev/null \
+  || fail "scripts/release-package.sh must bound the gate-flag search by the release commit's date"
 grep -F 'grep -qxF "$commit" "$in_range"' scripts/release-package.sh >/dev/null \
   || fail "scripts/release-package.sh must keep only pull requests merged into prev..GIT_SHA"
 grep -F "id-token: write" "$workflow" >/dev/null || fail "${workflow} must request id-token for provenance"
