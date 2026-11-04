@@ -84,18 +84,27 @@ for path in sorted(p for p in out.iterdir() if p.is_file() and p.name != "SHA256
 
 LABEL_ARGS=()
 if [[ -n "$TAG" && "$SKIP_GITHUB" -eq 0 ]] && command -v gh >/dev/null 2>&1; then
-  prev="$(git tag --list 'v*' --sort=-version:refname)"
-  prev="$(awk -v cur="$TAG" '$0 != cur { print; exit }' <<<"$prev")"
+  # Gate flags come from the pull requests merged since the nearest earlier
+  # final tag in the release commit's history (an rc does not reset the
+  # range), and only those whose merge commit is in prev..GIT_SHA, so a retry
+  # days later does not count work merged after the tagged commit.
+  prev="$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-*' "${GIT_SHA}^" 2>/dev/null || true)"
+  range="$GIT_SHA"
   search=()
   if [[ -n "$prev" ]]; then
+    range="${prev}..${GIT_SHA}"
     since="$(git log -1 --format=%cs "$prev" 2>/dev/null || true)"
     if [[ -n "$since" ]]; then
       search+=(--search "merged:>=${since}")
     fi
   fi
-  while IFS= read -r label; do
-    [[ -n "$label" ]] && LABEL_ARGS+=("--label" "$label")
-  done < <(gh pr list --state merged --limit 100 "${search[@]}" --json labels --jq '.[].labels[].name' 2>/dev/null || true)
+  in_range="$(mktemp)"
+  git rev-list "$range" >"$in_range"
+  while IFS=$'\t' read -r commit label; do
+    [[ -n "$label" ]] && grep -qxF "$commit" "$in_range" && LABEL_ARGS+=("--label" "$label")
+  done < <(gh pr list --state merged --limit 100 "${search[@]}" --json mergeCommit,labels \
+    --jq '.[] | select(.mergeCommit != null) | .mergeCommit.oid as $c | .labels[] | "\($c)\t\(.name)"' 2>/dev/null || true)
+  rm -f "$in_range"
 fi
 
 manifest_args=(
