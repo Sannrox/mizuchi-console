@@ -98,6 +98,16 @@ grep -F 'merged="merged:$(utc_day "$prev")..${until_day}"' scripts/release-packa
   || fail "scripts/release-package.sh must bound the gate-flag search by the release commit's date"
 grep -F 'grep -qxF "$commit" "$in_range"' scripts/release-package.sh >/dev/null \
   || fail "scripts/release-package.sh must keep only pull requests merged into prev..GIT_SHA"
+# The gate-flag lookup discards its errors, so a token that cannot read pull
+# requests would silently drop every gate flag.
+python3 - "$workflow" <<'PY_PR_READ' || fail "${workflow} must grant pull-requests: read to the job that runs release-package.sh"
+import re, sys
+body = open(sys.argv[1]).read().split("\njobs:\n", 1)[1]
+jobs = [b for b in re.split(r"(?m)^(?=  [a-z][a-z0-9-]*:\n)", body) if "bash scripts/release-package.sh" in b]
+perms = [re.search(r"(?m)^    permissions:\n((?:      .*\n)+)", b) for b in jobs]
+if not jobs or not all(p and re.search(r"(?m)^      pull-requests: read$", p.group(1)) for p in perms):
+    sys.exit(1)
+PY_PR_READ
 grep -F "id-token: write" "$workflow" >/dev/null || fail "${workflow} must request id-token for provenance"
 grep -F "attestations: write" "$workflow" >/dev/null || fail "${workflow} must request attestations permission"
 head_perm="$(sed -n '1,/^jobs:/p' "$workflow")"
