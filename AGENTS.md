@@ -37,7 +37,8 @@ bash scripts/validate-release.sh
 Shared workflow skills come from [Sannrox/agent-kit](https://github.com/Sannrox/agent-kit),
 tracking `main` with no lock. `.agents/skills/*/SKILL.md` are stubs that point there;
 repo-specific facts the skills need live in `## Agent skill profile` below. Check the stubs with
-`bash scripts/validate-workflow-skills.sh`.
+`bash scripts/validate-workflow-skills.sh`. The opt-in `ui-e2e` skill proves console UI work
+with mocks, a states gallery, browser tests, screenshots, and read-only live journeys.
 
 ## Agent skill profile
 
@@ -71,6 +72,27 @@ retry mutations silently.
 | agent-kit stubs             | `bash scripts/validate-workflow-skills.sh`                 |
 | release path                | `bash scripts/validate-release.sh`                         |
 | dependency bumps            | `pnpm-lock.yaml` diff reviewed; release notes in the PR    |
+
+### UI proof
+
+- Browser tests: none yet; the repository has no Playwright. The first UI
+  change adds `@playwright/test`, an `e2e/` suite, and a shared mock backend
+  that serves `dist/` and recorded API responses on port 0.
+- Live target: a running mizuchi server, read-only. No create, save, publish,
+  or delete without explicit authorization for that write. Never record its
+  address in the repository.
+- Design constraints:
+  - dark mode on a true black `#000` background, white primary text;
+  - information-dense;
+  - no decorative card or pill chrome;
+  - no light-grey subtitle lines above sections;
+  - minimal copy, no em dashes;
+  - no continuously repainting animations (pulse, shimmer, spinners, blur).
+- Artifacts: screenshots, traces, and videos go to a per-process directory
+  outside the repository (system temp, process id plus a unique suffix).
+  Never commit them.
+- Mocks and states galleries: publish with postplan and link them from the
+  Issue and Pull Request. Re-upload the same file to keep the link stable.
 
 ### Release audit
 
@@ -177,7 +199,8 @@ the remaining lanes recheck `mergeable` against the new `main`.
 The lead of a parallel run keeps a ledger per lane: Issue, branch, base SHA,
 owner, state, Pull Request, evidence, blockers, and cleanup. Keep hostnames
 and absolute checkout paths in the session with the maintainer, never on
-GitHub. Report verified outcomes, not launched work. The executable lead
+GitHub. Published postplan mock and gallery links are the one allowed
+exception (see UI proof). Report verified outcomes, not launched work. The executable lead
 procedure is `skills/deliver-ready-issue/references/parallel-delivery.md` in
 agent-kit.
 
